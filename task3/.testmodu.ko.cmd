@@ -1,0 +1,1 @@
+cmd_/home/allex/newmod/chardriver/testmodu.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/allex/newmod/chardriver/testmodu.ko /home/allex/newmod/chardriver/testmodu.o /home/allex/newmod/chardriver/testmodu.mod.o
