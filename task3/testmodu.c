@@ -25,7 +25,6 @@ acme_read(struct file *file, char __user * buf, size_t count, loff_t * ppos)
 	/* The acme_buf address corresponds to a device I/O memory area */
 	/* of size acme_bufsize, obtained with ioremap() */
 	int remaining_size, transfer_size;
-
 	remaining_size = acme_bufsize - (int)(*ppos);
 				/* bytes left to transfer */
 	if (remaining_size == 0) {
