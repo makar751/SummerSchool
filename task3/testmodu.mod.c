@@ -22,11 +22,16 @@ __attribute__((section("__versions"))) = {
 	{ 0x7485e15e, __VMLINUX_SYMBOL_STR(unregister_chrdev_region) },
 	{ 0xc60c9479, __VMLINUX_SYMBOL_STR(cdev_add) },
 	{ 0x4913f259, __VMLINUX_SYMBOL_STR(cdev_init) },
-	{ 0xcde8846b, __VMLINUX_SYMBOL_STR(kmem_cache_alloc_trace) },
-	{ 0xf1ae0e03, __VMLINUX_SYMBOL_STR(kmalloc_caches) },
+	{ 0x37a0cba, __VMLINUX_SYMBOL_STR(kfree) },
+	{ 0xa6bbd805, __VMLINUX_SYMBOL_STR(__wake_up) },
 	{ 0x4f8b5ddb, __VMLINUX_SYMBOL_STR(_copy_to_user) },
+	{ 0xd2b09ce5, __VMLINUX_SYMBOL_STR(__kmalloc) },
+	{ 0xdb7305a1, __VMLINUX_SYMBOL_STR(__stack_chk_fail) },
+	{ 0xf08242c2, __VMLINUX_SYMBOL_STR(finish_wait) },
+	{ 0x2207a57f, __VMLINUX_SYMBOL_STR(prepare_to_wait_event) },
+	{ 0x1000e51, __VMLINUX_SYMBOL_STR(schedule) },
+	{ 0xa1c76e0a, __VMLINUX_SYMBOL_STR(_cond_resched) },
 	{ 0x4f6b400b, __VMLINUX_SYMBOL_STR(_copy_from_user) },
-	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0xbdfb6dbb, __VMLINUX_SYMBOL_STR(__fentry__) },
 };
 
@@ -36,4 +41,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "C5BA8B767803E580E4E9B8C");
+MODULE_INFO(srcversion, "E1D624B8DFBE51D416A1656");

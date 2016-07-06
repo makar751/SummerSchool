@@ -1,2 +1,2 @@
-/home/allex/newmod/chardriver/testmodu.ko
-/home/allex/newmod/chardriver/testmodu.o
+/home/allex/Dropbox/RTSoft/task3/testmodu.ko
+/home/allex/Dropbox/RTSoft/task3/testmodu.o

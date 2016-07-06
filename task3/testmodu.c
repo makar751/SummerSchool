@@ -6,78 +6,71 @@
 #include <linux/io.h>
 #include <asm/uaccess.h>
 #include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+
+#define buf_size 100
+
+static DECLARE_WAIT_QUEUE_HEAD(w_queue);
+static DECLARE_WAIT_QUEUE_HEAD(r_queue);
 
 static int acme_count = 1;
 static dev_t acme_dev = MKDEV(202, 128);
 
 static struct cdev acme_cdev;
-
 static struct buffer
 {
-	char bu[100];
+	char bu[buf_size];
 	char *begin, *end;
 } buff;
 
-static ssize_t
-acme_read(struct file *file, char __user * buf, size_t count, loff_t * ppos)
+static char* next_ptr(char *cur)
 {
-	printk("file read\n");
-	/* The acme_buf address corresponds to a device I/O memory area */
-	/* of size acme_bufsize, obtained with ioremap() */
-	int remaining_size, transfer_size;
-	remaining_size = acme_bufsize - (int)(*ppos);
-				/* bytes left to transfer */
-	if (remaining_size == 0) {
-				/* All read, returning 0 (End Of File) */
-		return 0;
-	}
-
-	/* Size of this transfer */
-	transfer_size = min_t(int, remaining_size, count);
-
-	if (copy_to_user
-	    (buf /* to */ , acme_buf + *ppos /* from */ , transfer_size)) {
-		return -EFAULT;
-	} else {		/* Increase the position in the open file */
-		*ppos += transfer_size;
-		return transfer_size;
-	}
+	char *next=cur++;
+	if (next>buff.bu+buf_size)
+		next=buff.bu;
+	return next;
 }
 
-static ssize_t
-acme_write(struct file *file, const char __user *buf, size_t count,
-	   loff_t *ppos)
+static ssize_t acme_read(struct file *file, char __user * buf, size_t count, loff_t * ppos)
 {
-	printk("file write\n");
-if (file->f_mode & FMODE_WRITE)
-{
-	int remaining_bytes;
-
-	/* Number of bytes not written yet in the device */
-	remaining_bytes = acme_bufsize - (*ppos);
-
-	if (count > remaining_bytes) {
-		/* Can't write beyond the end of the device */
-		return -EIO;
+	int readed = 0;
+	char *tmp=kmalloc(sizeof(char)*count,GFP_KERNEL);
+	while (readed != count)
+	{
+		if (buff.begin == buff.end) 
+		{
+			if (readed != 0) 
+				return readed;
+			wait_event_interruptible(r_queue, buff.begin != buff.end);
+		}
+		tmp[readed]=*buff.begin;
+		buff.begin = next_ptr(buff.begin);
+		readed++;
 	}
-
-	if (copy_from_user(acme_buf + *ppos /*to*/ , buf /*from*/ , count)) {
-		return -EFAULT;
-	} else {
-		/* Increase the position in the open file */
-		*ppos += count;
-		return count;
-	}
+	copy_to_user(buf, tmp, count);
+	wake_up_interruptible(&w_queue);
+	kfree(tmp);
+	return readed;
 }
-else
-return -EBUSY;	
+
+static ssize_t acme_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	int written=0;
+	while (written != count)
+	{
+		if (next_ptr(buff.end)==buff.begin) 
+			 wait_event_interruptible(w_queue, next_ptr(buff.end) != buff.begin);
+		copy_from_user(buff.end, (buf+written++), 1);
+		buff.end = next_ptr(buff.end);
+	}
+	wake_up_interruptible(&r_queue);
+	return written;
 }
 
 int icp_open (struct inode *ino, struct file *fl)
 {
-	printk("file open\n");
-		return 0;
-	
+		return 0;	
 }
 
 int icp_close (struct inode *ino, struct file *fl)
@@ -96,24 +89,16 @@ static const struct file_operations acme_fops = {
 static int __init acme_init(void)
 {
 	int err;
-	acme_buf=kmalloc(sizeof(int),GFP_KERNEL);
-	if (!acme_buf) {
-		err = -ENOMEM;
-		goto err_exit;
-	}
-
+	buff.begin=buff.end=buff.bu;
 	cdev_init(&acme_cdev, &acme_fops);
 
 	if (cdev_add(&acme_cdev, acme_dev, acme_count)) {
 		err = -ENODEV;
 		goto err_dev_unregister;
 	}
-	printk("before0\n");
 	return 0;
-	printk("after0\n");
  err_dev_unregister:
 	unregister_chrdev_region(acme_dev, acme_count);
- err_exit:
 	return err;
 }
 
