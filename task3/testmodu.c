@@ -7,16 +7,16 @@
 #include <asm/uaccess.h>
 #include <linux/slab.h>
 
-/* Physical address of the imaginary acme device */
-
-static void *acme_buf;
-static int acme_bufsize = sizeof(int);
-
 static int acme_count = 1;
 static dev_t acme_dev = MKDEV(202, 128);
 
 static struct cdev acme_cdev;
 
+static struct buffer
+{
+	char bu[100];
+	char *begin, *end;
+} buff;
 
 static ssize_t
 acme_read(struct file *file, char __user * buf, size_t count, loff_t * ppos)
