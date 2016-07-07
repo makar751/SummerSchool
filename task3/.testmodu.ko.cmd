@@ -1,1 +1,0 @@
-cmd_/home/allex/Dropbox/RTSoft/task3/testmodu.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/allex/Dropbox/RTSoft/task3/testmodu.ko /home/allex/Dropbox/RTSoft/task3/testmodu.o /home/allex/Dropbox/RTSoft/task3/testmodu.mod.o
