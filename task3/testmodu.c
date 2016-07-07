@@ -8,8 +8,9 @@
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
+#include <linux/string.h>
 
-#define buf_size 100
+#define buf_size 10
 
 static DECLARE_WAIT_QUEUE_HEAD(w_queue);
 static DECLARE_WAIT_QUEUE_HEAD(r_queue);
@@ -44,21 +45,18 @@ static ssize_t acme_read(struct file *file, char __user * buf, size_t count, lof
 			if (readed != 0) 
 			{
 				printk("EOF\n");
-				*ppos+=count;
+				copy_to_user(buf, tmp, readed);
 				return 0;
 			}
 			printk("event\n");
 			wait_event_interruptible(r_queue, buff.begin != buff.end);
-		}
-		tmp[readed]=*buff.begin;
-		printk("%s\n",buff.begin);
+		};
+		tmp[readed]=buff.begin[0];
 		buff.begin = next_ptr(buff.begin);
-		printk("%d\n",readed);
-		printk("%d\n",count);
 		readed++;
 	}
 	printk("%s\n",tmp);
-	copy_to_user(buf, tmp, count);
+	copy_to_user(buf, tmp, readed);
 	wake_up_interruptible(&w_queue);
 	kfree(tmp);
 	*ppos+=readed;
@@ -70,19 +68,16 @@ static ssize_t acme_write(struct file *file, const char __user *buf, size_t coun
 	int written=0;
 	while (written != count)
 	{	
-		if (buff.end==buff.begin) 
+		if (next_ptr(buff.end)==buff.begin) 
 		{
 			printk("event\n");
 			wait_event_interruptible(w_queue, next_ptr(buff.end) != buff.begin);
 		}
 		copy_from_user(buff.end, (buf+written), 1);
-		//printk("%d\n",buff.end);
-		//printk("%s\n",buff.end);
 		buff.end = next_ptr(buff.end);
 		written++;
 	}
 	wake_up_interruptible(&r_queue);
-	//printk("%d\n",buff.end);
 	*ppos += count;
 	return written;
 }
@@ -111,8 +106,7 @@ static int __init acme_init(void)
 {
 	int err;
 	buff.bu=kmalloc(sizeof(char)*buf_size,GFP_KERNEL);
-	buff.begin=buff.bu;
-	buff.end=buff.bu+buf_size;
+	buff.begin=buff.end=buff.bu;
 	cdev_init(&acme_cdev, &acme_fops);
 
 	if (cdev_add(&acme_cdev, acme_dev, acme_count)) {
