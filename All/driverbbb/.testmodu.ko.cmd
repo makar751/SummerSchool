@@ -1,1 +1,0 @@
-cmd_/home/user/newmod/driverbbb/testmodu.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/user/newmod/driverbbb/testmodu.ko /home/user/newmod/driverbbb/testmodu.o /home/user/newmod/driverbbb/testmodu.mod.o
