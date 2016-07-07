@@ -23,7 +23,7 @@ int main(){
 	for (i = 0; i < 30; i++){
 
         printf("READY to WRITE\n");
-		if (write(f, &i, sizeof(i)) )
+		if (write(f, &buffer[i], sizeof(char)) )
 			printf("%d: WRITED\n", i);
         else
         printf("NOT WRITE\n");

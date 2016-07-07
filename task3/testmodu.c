@@ -40,22 +40,21 @@ static ssize_t acme_read(struct file *file, char __user * buf, size_t count, lof
 	char *tmp=kmalloc(sizeof(char)*count,GFP_KERNEL);
 	while (readed != count)
 	{
+			printk("%d - %d\n",buff.begin,buff.end);
+			printk("%d\n",count);
 		if (buff.begin == buff.end) 
 		{
 			if (readed != 0) 
 			{
-				printk("EOF\n");
 				copy_to_user(buf, tmp, readed);
 				return 0;
 			}
-			printk("event\n");
 			wait_event_interruptible(r_queue, buff.begin != buff.end);
 		};
 		tmp[readed]=buff.begin[0];
 		buff.begin = next_ptr(buff.begin);
 		readed++;
 	}
-	printk("%s\n",tmp);
 	copy_to_user(buf, tmp, readed);
 	wake_up_interruptible(&w_queue);
 	kfree(tmp);
@@ -66,13 +65,14 @@ static ssize_t acme_read(struct file *file, char __user * buf, size_t count, lof
 static ssize_t acme_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
 	int written=0;
+	printk("%d\n",count);
+	printk("%d\n",sizeof(char));
+	printk("%d\n",sizeof(int));
 	while (written != count)
 	{	
+		printk("%d - %d\n",buff.begin,buff.end);
 		if (next_ptr(buff.end)==buff.begin) 
-		{
-			printk("event\n");
 			wait_event_interruptible(w_queue, next_ptr(buff.end) != buff.begin);
-		}
 		copy_from_user(buff.end, (buf+written), 1);
 		buff.end = next_ptr(buff.end);
 		written++;
@@ -106,7 +106,8 @@ static int __init acme_init(void)
 {
 	int err;
 	buff.bu=kmalloc(sizeof(char)*buf_size,GFP_KERNEL);
-	buff.begin=buff.end=buff.bu;
+	buff.begin=buff.bu;
+	buff.end=buff.bu+1;
 	cdev_init(&acme_cdev, &acme_fops);
 
 	if (cdev_add(&acme_cdev, acme_dev, acme_count)) {

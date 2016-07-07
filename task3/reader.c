@@ -20,10 +20,10 @@ int main(){
 		return 1;
 	}
 
-	int b;
+	char b;
 
 	while (read(f, &b, sizeof(b))){
-		printf("B = %d\n", b);
+		printf("B = %s\n", &b);
 	}
 
 	close(f);
