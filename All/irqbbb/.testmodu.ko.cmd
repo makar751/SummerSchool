@@ -1,0 +1,1 @@
+cmd_/home/user/newmod/irqbbb/testmodu.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/user/newmod/irqbbb/testmodu.ko /home/user/newmod/irqbbb/testmodu.o /home/user/newmod/irqbbb/testmodu.mod.o

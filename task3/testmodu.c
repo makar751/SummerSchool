@@ -20,13 +20,13 @@ static dev_t acme_dev = MKDEV(202, 128);
 static struct cdev acme_cdev;
 static struct buffer
 {
-	char bu[buf_size];
+	char *bu;
 	char *begin, *end;
 } buff;
 
 static char* next_ptr(char *cur)
 {
-	char *next=cur++;
+	char *next=cur+1;
 	if (next>buff.bu+buf_size)
 		next=buff.bu;
 	return next;
@@ -35,22 +35,33 @@ static char* next_ptr(char *cur)
 static ssize_t acme_read(struct file *file, char __user * buf, size_t count, loff_t * ppos)
 {
 	int readed = 0;
+	
 	char *tmp=kmalloc(sizeof(char)*count,GFP_KERNEL);
 	while (readed != count)
 	{
 		if (buff.begin == buff.end) 
 		{
 			if (readed != 0) 
-				return readed;
+			{
+				printk("EOF\n");
+				*ppos+=count;
+				return 0;
+			}
+			printk("event\n");
 			wait_event_interruptible(r_queue, buff.begin != buff.end);
 		}
 		tmp[readed]=*buff.begin;
+		printk("%s\n",buff.begin);
 		buff.begin = next_ptr(buff.begin);
+		printk("%d\n",readed);
+		printk("%d\n",count);
 		readed++;
 	}
+	printk("%s\n",tmp);
 	copy_to_user(buf, tmp, count);
 	wake_up_interruptible(&w_queue);
 	kfree(tmp);
+	*ppos+=readed;
 	return readed;
 }
 
@@ -58,23 +69,33 @@ static ssize_t acme_write(struct file *file, const char __user *buf, size_t coun
 {
 	int written=0;
 	while (written != count)
-	{
-		if (next_ptr(buff.end)==buff.begin) 
-			 wait_event_interruptible(w_queue, next_ptr(buff.end) != buff.begin);
-		copy_from_user(buff.end, (buf+written++), 1);
+	{	
+		if (buff.end==buff.begin) 
+		{
+			printk("event\n");
+			wait_event_interruptible(w_queue, next_ptr(buff.end) != buff.begin);
+		}
+		copy_from_user(buff.end, (buf+written), 1);
+		//printk("%d\n",buff.end);
+		//printk("%s\n",buff.end);
 		buff.end = next_ptr(buff.end);
+		written++;
 	}
 	wake_up_interruptible(&r_queue);
+	//printk("%d\n",buff.end);
+	*ppos += count;
 	return written;
 }
 
 int icp_open (struct inode *ino, struct file *fl)
 {
+		printk("open\n");
 		return 0;	
 }
 
 int icp_close (struct inode *ino, struct file *fl)
 {
+	printk("close\n");
 	return 0;
 }
 
@@ -89,7 +110,9 @@ static const struct file_operations acme_fops = {
 static int __init acme_init(void)
 {
 	int err;
-	buff.begin=buff.end=buff.bu;
+	buff.bu=kmalloc(sizeof(char)*buf_size,GFP_KERNEL);
+	buff.begin=buff.bu;
+	buff.end=buff.bu+buf_size;
 	cdev_init(&acme_cdev, &acme_fops);
 
 	if (cdev_add(&acme_cdev, acme_dev, acme_count)) {
