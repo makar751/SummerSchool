@@ -44,7 +44,7 @@ int main(void)
         exit(1);
     }
  
-    for(j=0;j<5000;j++)
+    for(j=0;j<50000;j++)
     {
          
         //send the message
