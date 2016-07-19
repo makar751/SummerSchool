@@ -29,9 +29,7 @@
 #include <linux/crc32.h>
 #include <linux/usb/usbnet.h>
 #include <linux/slab.h>
-#ifdef CONFIG_NET_RX_BUSY_POLL
-#include <net/busy_poll.h>
-#endif
+
 #include "smsc95xx.h"
 
 #define SMSC_CHIPNAME			"smsc95xx"
